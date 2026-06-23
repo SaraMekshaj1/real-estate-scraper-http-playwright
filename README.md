@@ -294,10 +294,10 @@ git clone https://github.com/SaraMekshaj1/real-estate-scraper-http-playwright.gi
 cd real-estate-scraper-http-playwright
 python -m venv venv
 venv\Scripts\activate
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 playwright install
+```
 
----
 ## Running the Scraper
 
 ```bash

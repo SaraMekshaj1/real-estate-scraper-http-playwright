@@ -1,6 +1,6 @@
 {
-  "pages_exhausted": false,
-  "run_in_progress": true,
+  "pages_exhausted": true,
+  "run_in_progress": false,
   "exported:WEST143437": true,
   "exported:Sol143272": true,
   "exported:Sol143261": true,
