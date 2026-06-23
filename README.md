@@ -9,6 +9,7 @@ A fault-tolerant web scraping system designed to collect thousands of property l
 ![AsyncIO](https://img.shields.io/badge/AsyncIO-Concurrent-orange)
 ![License](https://img.shields.io/badge/License-MIT-red)
 
+---
 
 ## Project Highlights
 
@@ -22,7 +23,7 @@ A fault-tolerant web scraping system designed to collect thousands of property l
 - Automatic failed URL retry pipeline
 - Duplicate prevention and validation
 
-
+---
 ## Overview
 
 This scraper was built to handle real-world scraping challenges that simple script typically ignore:
@@ -38,6 +39,7 @@ This scraper was built to handle real-world scraping challenges that simple scri
 The system uses Playwright for JavaScript-rendered content and AsyncIO
 for concurrent processing while maintaining persistent state across runs.
 
+---
 ### Target Website
 
 | Property           | Value             |
@@ -92,7 +94,7 @@ The scraper also supports:
 * Browser crash recovery
 * Adaptive rate limiting
 
-## Incremental Crawling Example
+### Incremental Crawling Example
 
 After the initial historical crawl is completed, subsequent executions collect only newly published properties.
 
@@ -111,6 +113,7 @@ The scraper automatically stopped after reaching previously exported records, av
 
 This reduced the crawl scope from over 1,000 pages to only 28 pages while still collecting all newly published listings.
 
+---
 ## Architecture
 
 Page Producer
@@ -166,9 +169,8 @@ monitoring/
 tests/
 output/
 ```
----
----
 
+---
 ## Reliability Features
 
 ### Retry Strategy
@@ -204,6 +206,8 @@ Transient failures are stored and automatically retried in subsequent runs.
 - **Scalable state storage** – Scalable state storage – Storage abstraction designed to support future JSON, SQLite, and Redis backends.
 
 
+---
+
 ## Engineering Decisions
 
 ### Why Playwright instead of Requests?
@@ -222,6 +226,7 @@ without blocking threads, significantly improving throughput.
 hammering the server, reducing wasted retries and improving recovery.
 
 
+---
 ## Core Features
 
 ### High Performance
@@ -271,10 +276,9 @@ hammering the server, reducing wasted retries and improving recovery.
   "characteristics": "newar the beach, view to beach",
 }
 ```
-
+---
 
 ## Tech Stack
-
 * Python 3.12+
 * AsyncIO
 * Playwright
