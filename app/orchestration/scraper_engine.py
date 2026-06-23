@@ -12,11 +12,12 @@ from app.abstractions.base_storage import BaseStorage
 from app.config.settings import ScraperSettings
 from app.mappers.property_mapper import PropertyMapper
 from app.models.property_model import Property
+from app.models.run_outcome import RunOutcome
 from app.services.deduplication_service import DeduplicationService
 from app.services.export_service import ExportService
 from app.services.scrape_service import ScrapeService
 from app.storage.failed_url_store import FailedUrlStore
-from app.utils.rate_limiter import AsyncRateLimiter          # ← NEW
+from app.utils.rate_limiter import AsyncRateLimiter
 from monitoring.logger import Metrics, timed
 
 logger = logging.getLogger("scraper")
@@ -28,8 +29,9 @@ class ScraperEngine:
     """
     Thin pipeline coordinator.
 
-    (Docstring unchanged — see original for full explanation of the
-    streaming batch pipeline and run-completion tracking.)
+    Run-state decisions are delegated entirely to DeduplicationService.
+    The engine observes what happened (outcome + error count) and reports
+    it; the service decides what it means for the next run.
     """
 
     def __init__(
@@ -41,7 +43,7 @@ class ScraperEngine:
         settings:         ScraperSettings,
         metrics:          Metrics,
         failed_url_store: FailedUrlStore   | None = None,
-        rate_limiter:     AsyncRateLimiter | None = None,    # ← NEW
+        rate_limiter:     AsyncRateLimiter | None = None,
     ) -> None:
         self._client   = client
         self._settings = settings
@@ -56,7 +58,7 @@ class ScraperEngine:
             settings         = settings,
             metrics          = metrics,
             failed_url_store = failed_url_store,
-            rate_limiter     = rate_limiter,                 # ← NEW
+            rate_limiter     = rate_limiter,
         )
         self._dedup = DeduplicationService(
             storage = storage,
@@ -83,7 +85,7 @@ class ScraperEngine:
             self._settings.worker_count,
             self._settings.max_pages,
             self._batch_size,
-            self._settings.requests_per_second,              # ← NEW log field
+            self._settings.requests_per_second,
         )
 
         total_exported = 0
@@ -129,6 +131,7 @@ class ScraperEngine:
         EARLY_STOP_THRESHOLD = 24
         consecutive_known    = 0
         stream_exhausted     = False
+        early_stop_triggered = False          # ← NEW
 
         stop_event = asyncio.Event()
 
@@ -145,6 +148,7 @@ class ScraperEngine:
                 )
                 if run_mode == "daily" and consecutive_known >= EARLY_STOP_THRESHOLD:
                     logger.info("Early stop triggered.")
+                    early_stop_triggered = True   # ← NEW
                     stop_event.set()
                     break
                 continue
@@ -170,33 +174,60 @@ class ScraperEngine:
             total_scraped, total_skipped, total_exported, batch_num,
         )
 
-        pages_exhausted = self._scrape_svc.pages_exhausted
-
-        logger.info(
-            "Completion check — stream_exhausted=%s  pages_exhausted=%s",
-            stream_exhausted, pages_exhausted,
+        pages_exhausted      = self._scrape_svc.pages_exhausted
+        scrape_error_count   = int(                               # ← NEW
+            self._metrics.snapshot().get("scrape.errors", 0)
         )
 
+        logger.info(
+            "Completion check — stream_exhausted=%s  pages_exhausted=%s  "
+            "early_stop=%s  scrape_errors=%d",
+            stream_exhausted, pages_exhausted,
+            early_stop_triggered, scrape_error_count,
+        )
+
+        # ── Determine outcome and record it ──────────────────────────────
+        #
+        # COMPLETED:    producer visited every page naturally (no stop_event,
+        #               no max_pages clip) AND the for/else branch fired.
+        #
+        # EARLY_STOP:   daily run hit the consecutive-known threshold; the
+        #               assumption is we've reached historical territory and
+        #               any new listings tomorrow will appear at page 1.
+        #               Only safe to treat as "done" when there were no
+        #               worker errors — otherwise we may have gaps.
+        #
+        # INTERRUPTED:  everything else — rate-limit kill, crash recovery,
+        #               max_pages clip, network drop, resume run that didn't
+        #               finish.  Leave run_in_progress=True so next run
+        #               enters resume mode.
+
         if stream_exhausted and pages_exhausted:
+            outcome = RunOutcome.COMPLETED
             self._dedup.mark_pages_exhausted()
-            self._dedup.end_run()
             logger.info(
                 "Run completed cleanly — all pages scraped. "
-                "end_run() called; next run will start fresh (daily mode)."
+                "end_run(COMPLETED) called; next run will be daily."
             )
-        else:
-            if not stream_exhausted:
-                logger.info(
-                    "Run ended via early-stop — end_run() NOT called; "
-                    "next run will resume from last_exported_id."
-                )
-            else:
-                logger.info(
-                    "Stream exhausted but producer did not reach the last page "
-                    "(rate-limit / network stop?) — end_run() NOT called; "
-                    "next run will resume."
-                )
 
+        elif early_stop_triggered:
+            outcome = RunOutcome.EARLY_STOP
+            # end_run() decides whether errors make this a resume or daily —
+            # see DeduplicationService.end_run() for the exact rule.
+            logger.info(
+                "Run ended via early-stop. "
+                "end_run(EARLY_STOP, errors=%d) called.",
+                scrape_error_count,
+            )
+
+        else:
+            outcome = RunOutcome.INTERRUPTED
+            logger.info(
+                "Run interrupted (rate-limit / network / max_pages). "
+                "end_run(INTERRUPTED) called; next run will be resume."
+            )
+
+        self._dedup.end_run(outcome, scrape_error_count)
         return total_exported
 
     async def _process_batch(
