@@ -1,5 +1,6 @@
 # Production-Grade Real Estate Scraper
 **Python • Playwright • AsyncIO • Fault-Tolerant Architecture**
+
 A fault-tolerant web scraping system designed to collect thousands of property listings from Century21 Albania website while handling interruptions, rate limits, browser crashes, and duplicate data automatically.
 
 
