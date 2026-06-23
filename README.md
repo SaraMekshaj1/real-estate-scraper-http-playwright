@@ -297,8 +297,7 @@ cd real-estate-scraper-http-playwright
 pip install -r requirements.txt
 
 playwright install
-
----
+```
 
 ## Running the Scraper
 
