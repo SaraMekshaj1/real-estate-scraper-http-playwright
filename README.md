@@ -293,9 +293,9 @@ hammering the server, reducing wasted retries and improving recovery.
 git clone https://github.com/SaraMekshaj1/real-estate-scraper-http-playwright.git
 
 cd real-estate-scraper-http-playwright
-
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
-
 playwright install
 ```
 
