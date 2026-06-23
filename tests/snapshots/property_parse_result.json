@@ -1,0 +1,21 @@
+{
+  "property_id": "C21-12345",
+  "url": "http://test.com/prop/1",
+  "title": "Apartament 2+1 ne Tirane",
+  "price_raw": "150,000 €",
+  "price_currency": "EUR",
+  "location": "Tiranë, Blloku",
+  "description_al": "Apartament modern me pamje te bukur.",
+  "images": null,
+  "total_area": null,
+  "internal_area": null,
+  "number_of_bedrooms": null,
+  "floor": null,
+  "statusi": null,
+  "lloji": null,
+  "mobilimi": null,
+  "ka_hipoteke": null,
+  "ashensor": null,
+  "number_of_toilets": null,
+  "karakteristikat": null
+}
