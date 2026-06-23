@@ -291,15 +291,13 @@ hammering the server, reducing wasted retries and improving recovery.
 
 ```bash
 git clone https://github.com/SaraMekshaj1/real-estate-scraper-http-playwright.git
-
 cd real-estate-scraper-http-playwright
-
-pip install -r requirements.txt
-
+python -m venv venv
+venv\Scripts\activate
+python -m pip install -r requirements.txt
 playwright install
 
 ---
-
 ## Running the Scraper
 
 ```bash
@@ -337,13 +335,6 @@ This project demonstrates practical implementation of:
 
 ![alt text](image-4.png)
 
-### Architecture Diagram
-
-![alt text](image-5.png)
-![alt text](image-6.png)
-![alt text](image-7.png)
-
----
 
 ## Disclaimer
 
