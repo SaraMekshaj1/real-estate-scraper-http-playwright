@@ -115,6 +115,7 @@ This reduced the crawl scope from over 1,000 pages to only 28 pages while still 
 
 ---
 ## Architecture
+```text
 
 Page Producer
       │
@@ -140,6 +141,7 @@ Scraper Engine
       │
       ▼
 CSV Export
+```
 
 ---
 
@@ -288,9 +290,9 @@ hammering the server, reducing wasted retries and improving recovery.
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/project-name.git
+git clone https://github.com/SaraMekshaj1/real-estate-scraper-http-playwright.git
 
-cd project-name
+cd real-estate-scraper-http-playwright
 
 pip install -r requirements.txt
 
@@ -326,7 +328,9 @@ This project demonstrates practical implementation of:
 ## Screenshots
 
 ### Scraping Progress in a daily run
-![alt text](image-3.png)
+![alt text](image-9.png)
+![alt text](image-10.png)
+![alt text](image-11.png)
 
 
 ### Exported Dataset
